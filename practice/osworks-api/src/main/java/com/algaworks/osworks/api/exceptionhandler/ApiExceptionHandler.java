@@ -1,6 +1,7 @@
 package com.algaworks.osworks.api.exceptionhandler;
 
 import com.algaworks.osworks.domain.exception.BusinessException;
+import com.algaworks.osworks.domain.exception.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -16,6 +17,7 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 
 @ControllerAdvice
@@ -23,6 +25,21 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
     @Autowired
     private MessageSource messageSource;
+
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<Object> handleEntityNotFound(BusinessException ex, WebRequest request) {
+
+        HttpStatus status = HttpStatus.NOT_FOUND;
+
+        Trouble trouble = new Trouble();
+        trouble.setStatus(status.value());
+        trouble.setTitle(ex.getMessage());
+        trouble.setDateTime(OffsetDateTime.now());
+
+        return handleExceptionInternal(ex, trouble, new HttpHeaders(), status, request);
+
+    }
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<Object> businessHandle(BusinessException ex, WebRequest request) {
@@ -32,7 +49,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         Trouble trouble = new Trouble();
         trouble.setStatus(status.value());
         trouble.setTitle(ex.getMessage());
-        trouble.setDateTime(LocalDateTime.now());
+        trouble.setDateTime(OffsetDateTime.now());
 
         return handleExceptionInternal(ex, trouble, new HttpHeaders(), status, request);
     }
@@ -54,7 +71,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
         trouble.setStatus(status.value());
         trouble.setTitle("One or more fields are invalid. Fill it correctly and try again");
-        trouble.setDateTime(LocalDateTime.now());
+        trouble.setDateTime(OffsetDateTime.now());
         trouble.setFields(fields);
 
         return super.handleExceptionInternal(ex, trouble, headers, status, request);
